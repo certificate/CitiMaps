@@ -108,3 +108,7 @@ venv.bak/
 
 # CSV
 *.csv
+
+# HTML
+*.html
+.html
