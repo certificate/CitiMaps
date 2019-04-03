@@ -23,7 +23,7 @@ def get_data():
 
 def main():
     print("Running main function")
-    output_file("tile.html")
+    output_file("plot.html")
 
     get_data()
 
@@ -42,8 +42,8 @@ def main():
 
     # range bounds supplied in web mercator coordinates
     p = figure(x_range=merc_x_range, y_range=merc_y_range,
-               x_axis_type="mercator", y_axis_type="mercator")
-    p.circle(x="lat", y="lon", size=5, fill_color="red", fill_alpha=0.8, source=source)
+               x_axis_type="mercator", y_axis_type="mercator", plot_width=1920, plot_height=1080)
+    p.circle(x="lat", y="lon", size=10, fill_color="red", fill_alpha=0.8, source=source)
 
     p.add_tile(CARTODBPOSITRON_RETINA)
 
