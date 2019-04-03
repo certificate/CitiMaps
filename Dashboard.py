@@ -6,15 +6,15 @@ import csvReader
 
 
 def stations_to_lists(stations):
-    lat = []
-    lon = []
+    merc_x = []
+    merc_y = []
 
     for station in stations:
-        lat.append(station.latitude)
-        lon.append(station.longitue)
+        merc_x.append(station.merc_x)
+        merc_y.append(station.merc_y)
         print("Did one!")
 
-    return lat, lon
+    return merc_x, merc_y
 
 
 def get_data():
@@ -29,18 +29,21 @@ def main():
 
     stations = csvReader.stationList
 
-    # range bounds supplied in web mercator coordinates
-    p = figure(x_range=(-2000000, 6000000), y_range=(-1000000, 7000000),
-               x_axis_type="mercator", y_axis_type="mercator")
+    merc_x_list, merc_y_list = stations_to_lists(stations)
 
-    latlist, lonlist = stations_to_lists(stations)
+    # define x and y ranges
+    merc_x_range = [a(merc_x_list) for a in [min, max]]
+    merc_y_range = [a(merc_y_list) for a in [min, max]]
 
     source = ColumnDataSource(
-        data=dict(lat=latlist,
-                  lon=lonlist)
+        data=dict(lat=merc_x_list,
+                  lon=merc_y_list)
     )
 
-    p.circle(x="lon", y="lat", size=15, fill_color="blue", fill_alpha=0.8, source=source)
+    # range bounds supplied in web mercator coordinates
+    p = figure(x_range=merc_x_range, y_range=merc_y_range,
+               x_axis_type="mercator", y_axis_type="mercator")
+    p.circle(x="lat", y="lon", size=5, fill_color="red", fill_alpha=0.8, source=source)
 
     p.add_tile(CARTODBPOSITRON_RETINA)
 
