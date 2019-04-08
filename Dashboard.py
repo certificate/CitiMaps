@@ -40,12 +40,19 @@ def main():
                   lon=merc_y_list)
     )
 
+    TOOLTIPS = [
+        ("index", "$index"),
+        ("(X-coordinate)", "(@lat)"),
+        ("(Y-coordinate)", "(@lon)")
+    ]
+
     # range bounds supplied in web mercator coordinates
     p = figure(x_range=merc_x_range, y_range=merc_y_range,
-               x_axis_type="mercator", y_axis_type="mercator", plot_width=1920, plot_height=1080)
+               x_axis_type="mercator", y_axis_type="mercator", plot_width=1280, plot_height=720,
+               tooltips=TOOLTIPS, title="Station locations in New York")
     p.circle(x="lat", y="lon", size=10, fill_color="red", fill_alpha=0.8, source=source)
-
     p.add_tile(CARTODBPOSITRON_RETINA)
+
 
     show(p)
 
