@@ -53,8 +53,10 @@ def main():
         ("Y-coordinate", "@lon")
     ]
 
+    TOOLS = "pan,wheel_zoom,box_zoom,box_select,lasso_select,reset,hover,save,help"
+
     # range bounds supplied in web mercator coordinates
-    p = figure(x_range=merc_x_range, y_range=merc_y_range,
+    p = figure(tools=TOOLS, x_range=merc_x_range, y_range=merc_y_range,
                x_axis_type="mercator", y_axis_type="mercator", plot_width=1280, plot_height=720,
                tooltips=TOOLTIPS, title="Station locations in New York")
     p.circle(x="lat", y="lon", size=10, fill_color="red", fill_alpha=0.8, source=source)
