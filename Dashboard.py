@@ -8,13 +8,17 @@ import csvReader
 def stations_to_lists(stations):
     merc_x = []
     merc_y = []
+    names = []
+    station_id = []
 
     for station in stations:
         merc_x.append(station.merc_x)
         merc_y.append(station.merc_y)
+        names.append(station.name)
+        station_id.append(station.stationId)
         print("Did one!")
 
-    return merc_x, merc_y
+    return merc_x, merc_y, names, station_id
 
 
 def get_data():
@@ -29,7 +33,7 @@ def main():
 
     stations = csvReader.stationList
 
-    merc_x_list, merc_y_list = stations_to_lists(stations)
+    merc_x_list, merc_y_list, names, station_id = stations_to_lists(stations)
 
     # define x and y ranges
     merc_x_range = [a(merc_x_list) for a in [min, max]]
@@ -37,13 +41,16 @@ def main():
 
     source = ColumnDataSource(
         data=dict(lat=merc_x_list,
-                  lon=merc_y_list)
+                  lon=merc_y_list,
+                  station_name=names,
+                  station_unique=station_id)
     )
 
     TOOLTIPS = [
-        ("index", "$index"),
-        ("(X-coordinate)", "(@lat)"),
-        ("(Y-coordinate)", "(@lon)")
+        ("stationID", "@station_unique"),
+        ("station", "@station_name"),
+        ("X-coordinate", "@lat"),
+        ("Y-coordinate", "@lon")
     ]
 
     # range bounds supplied in web mercator coordinates
