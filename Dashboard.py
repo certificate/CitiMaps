@@ -55,6 +55,8 @@ def main():
         ("Y-coordinate", "@lon")
     ]
 
+    TOOLS = "pan,wheel_zoom,box_zoom,box_select,lasso_select,reset,hover,save,help"
+
     # range bounds supplied in web mercator coordinates
     p = figure(x_range=merc_x_range, y_range=merc_y_range,
                x_axis_type="mercator", y_axis_type="mercator", plot_width=1920, plot_height=1080,
