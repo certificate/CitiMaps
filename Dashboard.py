@@ -1,7 +1,8 @@
-from bokeh.models import ColumnDataSource
+from bokeh.models import ColumnDataSource, CustomJS, TapTool
 from bokeh.plotting import figure, show, output_file
 from bokeh.tile_providers import CARTODBPOSITRON_RETINA
 
+import bokeh
 import csvReader
 
 
@@ -46,6 +47,7 @@ def main():
                   station_unique=station_id)
     )
 
+
     TOOLTIPS = [
         ("stationID", "@station_unique"),
         ("station", "@station_name"),
@@ -55,16 +57,38 @@ def main():
 
     # range bounds supplied in web mercator coordinates
     p = figure(x_range=merc_x_range, y_range=merc_y_range,
-               x_axis_type="mercator", y_axis_type="mercator", plot_width=1280, plot_height=720,
+               x_axis_type="mercator", y_axis_type="mercator", plot_width=1920, plot_height=1080,
                tooltips=TOOLTIPS, title="Station locations in New York")
     p.circle(x="lat", y="lon", size=10, fill_color="red", fill_alpha=0.8, source=source)
     p.add_tile(CARTODBPOSITRON_RETINA)
 
+
+    # Code for the callback
+    code = """
+    
+    
+    // Set column name to select similar glyphs
+    var column = 'station_unique';
+
+    // Get data from ColumnDataSource
+    var data = source.data;
+
+    // Get indices array of all selected items
+    var selected = source.selected.indices;
+
+    for (item in selected){
+        console.log("Station name for ID "+ selected[item] + " is: " + station_name[item])
+    }
+    
+    
+    
+    """
+
+    callback = CustomJS(args={'source': source, 'station_name':names, 'station_id':station_id}, code=code)
+    p.add_tools(TapTool(callback=callback))
 
     show(p)
 
 
 if __name__ == '__main__':
     main()
-
-

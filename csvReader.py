@@ -2,6 +2,7 @@ import csv
 import time
 import math
 
+
 class Station:
     def __init__(self, name, lat, lon, stationId, merc_x, merc_y):
         self.name = name
