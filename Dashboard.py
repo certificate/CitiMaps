@@ -77,6 +77,12 @@ def main():
 
     // Get indices array of all selected items
     var selected = source.selected.indices;
+    console.log(selected.length); // 3
+    
+    if (selected.length > 2){
+        console.log("Too many! Closing selections.");
+        source.selected.indices = [];
+    }
 
     for (item in selected){
         console.log("Station name for ID "+ selected[item] + " is: " + station_name[item])
