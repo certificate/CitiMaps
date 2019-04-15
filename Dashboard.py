@@ -47,6 +47,8 @@ def main():
                   station_unique=station_id)
     )
 
+    source2 = ColumnDataSource({'x0': [], 'y0': [], 'x1': [], 'y1': []})
+
 
     TOOLTIPS = [
         ("stationID", "@station_unique"),
@@ -62,6 +64,7 @@ def main():
                x_axis_type="mercator", y_axis_type="mercator", plot_width=1920, plot_height=1080,
                tooltips=TOOLTIPS, title="Station locations in New York")
     p.circle(x="lat", y="lon", size=10, fill_color="red", fill_alpha=0.8, source=source)
+    sr = p.segment(x0='x0', y0='y0', x1='x1', y1='y1', color='red', alpha=0.6, line_width=3, source=source2)
     p.add_tile(CARTODBPOSITRON_RETINA)
 
 
@@ -69,6 +72,11 @@ def main():
     code = """
     
     
+    function removeSegment() {
+        var emptyData = {'x0': [], 'y0': [], 'x1': [], 'y1': []};
+        segment.data = emptyData;
+    }
+
     // Set column name to select similar glyphs
     var column = 'station_unique';
 
@@ -79,20 +87,40 @@ def main():
     var selected = source.selected.indices;
     console.log(selected.length); // 3
     
+    // Remove segment if only 1 dot selected
+    if (selected.length == 1){
+        removeSegment()
+    }
+    
     if (selected.length > 2){
         console.log("Too many! Closing selections.");
         source.selected.indices = [];
+        removeSegment()
     }
 
     for (item in selected){
         console.log("Station name for ID "+ selected[item] + " is: " + station_name[item])
+        console.log(cb_data)
     }
-    
+
+    if (selected.length == 2){
+
+        var selID = selected[0]
+        var segData = {'x0': [], 'y0': [], 'x1': [], 'y1': []};
+
+        segData['x0'].push(data.lat[selected[0]]);
+        segData['y0'].push(data.lon[selected[0]]);
+        segData['x1'].push(data.lat[selected[1]]);
+        segData['y1'].push(data.lon[selected[1]]);
+
+        segment.data = segData;
+
+    }
     
     
     """
 
-    callback = CustomJS(args={'source': source, 'station_name':names, 'station_id':station_id}, code=code)
+    callback = CustomJS(args={'source': source, 'station_name':names, 'station_id':station_id, 'segment': sr.data_source}, code=code)
     p.add_tools(TapTool(callback=callback))
 
     show(p)
