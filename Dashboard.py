@@ -1,10 +1,9 @@
 from bokeh.models import ColumnDataSource, CustomJS, TapTool
 from bokeh.plotting import figure, show, output_file
-from bokeh.tile_providers import CARTODBPOSITRON_RETINA
+from bokeh.tile_providers import get_provider, Vendors
 
 import bokeh
 import csvReader
-
 
 def stations_to_lists(stations):
     merc_x = []
@@ -17,8 +16,8 @@ def stations_to_lists(stations):
         merc_y.append(station.merc_y)
         names.append(station.name)
         station_id.append(station.stationId)
-        print("Did one!")
 
+    print("All stations converted to lists")
     return merc_x, merc_y, names, station_id
 
 
@@ -46,8 +45,10 @@ def main():
                   station_name=names,
                   station_unique=station_id)
     )
+    segment_source = ColumnDataSource({'x0': [], 'y0': [], 'x1': [], 'y1': []})
 
-    source2 = ColumnDataSource({'x0': [], 'y0': [], 'x1': [], 'y1': []})
+    # Here for test purposes
+    csvReader.calc_departures_per_hour(station_id[0])
 
 
     TOOLTIPS = [
@@ -63,9 +64,9 @@ def main():
     p = figure(x_range=merc_x_range, y_range=merc_y_range,
                x_axis_type="mercator", y_axis_type="mercator", plot_width=1920, plot_height=1080,
                tooltips=TOOLTIPS, title="Station locations in New York")
+    p.add_tile(get_provider(Vendors.CARTODBPOSITRON_RETINA))
     p.circle(x="lat", y="lon", size=10, fill_color="red", fill_alpha=0.8, source=source)
-    sr = p.segment(x0='x0', y0='y0', x1='x1', y1='y1', color='red', alpha=0.6, line_width=3, source=source2)
-    p.add_tile(CARTODBPOSITRON_RETINA)
+    sr = p.segment(x0='x0', y0='y0', x1='x1', y1='y1', color='red', alpha=0.6, line_width=3, source=segment_source)
 
 
     # Code for the callback
