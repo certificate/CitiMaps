@@ -45,22 +45,27 @@ p = figure(x_range=merc_x_range, y_range=merc_y_range,
            x_axis_type="mercator", y_axis_type="mercator", plot_width=1920, plot_height=1080,
            title="Station locations in New York")
 p.add_tile(get_provider(Vendors.CARTODBPOSITRON_RETINA))
-p.circle(x="lat", y="lon", size=10, fill_color="red", fill_alpha=0.8, source=source)
+circles = p.circle(x="lat", y="lon", size=10, fill_color="red", fill_alpha=0.8, source=source)
 sr = p.segment(x0='x0', y0='y0', x1='x1', y1='y1', color='red', alpha=0.6, line_width=3, source=segment_source)
 
 callback = CustomJS(args={'source': source, 'station_name': names, 'station_id': station_id, 'segment': sr.data_source},
                     code=js_codes.item_click_event())
 p.add_tools(TapTool(callback=callback))
+# put the button and plot in a layout and add to the document
+curdoc().add_root(column(p))
 
 
 # create a callback that will add a number in a random location
-def callback():
-    print("Yeeta-vitun-bix")
+def update(attr, old, new):
+    print(" ")
+    print(" ")
+    print(" ")
+    print(" ")
+    print("YEEEET")
+    print(" ")
+    print(" ")
+    print(" ")
+    print(" ")
 
 
-# add a button widget and configure with the call back
-button = Button(label="Press Me")
-button.on_click(callback)
-
-# put the button and plot in a layout and add to the document
-curdoc().add_root(column(button, p))
+circles.data_source.selected.on_change('indices', update)
