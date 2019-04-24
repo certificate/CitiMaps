@@ -2,6 +2,7 @@ import csv
 from datetime import datetime
 import time
 import math
+from collections import Counter
 
 
 class Station:
@@ -25,14 +26,15 @@ def merc(lat, lon):
 
 
 def import_data():
-    # Array for all the different variables which we will be using later.
+    # Array for all the stations.
+    stationList = []
 
     # Time the task just to see how efficient it is.
     t0 = time.time()
 
     # Let's open the behemoth of a file! (Close to 5 million lines of sweet, sweet data!) Remember to check if your
     # file has been named differently. Filename underneath was the one I got from unpacking the zip file.
-    with open("citibike.csv", 'r', encoding='latin-1') as data:
+    with open(filename, 'r', encoding='latin-1') as data:
         reader = csv.reader(data, delimiter=",")
         print("Working...")
 
@@ -65,6 +67,7 @@ def import_data():
         print("The whole operation took {} seconds.".format(round(total, 2)))
 
         print(len(stationList))
+        return stationList
 
 
 def calc_departures_per_hour(station_id):
@@ -72,8 +75,9 @@ def calc_departures_per_hour(station_id):
     # Time the task just to see how efficient it is.
     t0 = time.time()
     departures = []
+    hourly_dep = []
 
-    with open("citibike.csv", 'r', encoding='latin-1') as data:
+    with open(filename, 'r', encoding='latin-1') as data:
         reader = csv.reader(data, delimiter=",")
         # Skip the first row. Doesn't contain anything but the data formats.
         for _ in range(0, 1):
@@ -82,25 +86,39 @@ def calc_departures_per_hour(station_id):
             stationIdCSV = line[3]
 
             if (stationIdCSV == station_id):
-                # Line[1] = Departure Time. Format: '2019-01-01 00:01:47.4010'
-                master_split = line[1].split(' ')
-                date_split = master_split[0].split('-')
-                time_split = master_split[1].split(':')
-                seconds_split = time_split[2].split('.')
-                seconds = seconds_split[0]
 
-                departure = datetime(year=int(date_split[0]),
+                if(filename == "citi3.csv"):
+                    # 2/1/2015 0:04
+                    master_split = line[1].split(' ')
+                    time_split = master_split[1].split(':')
+                    seconds = time_split[0]
+
+                else:
+                    # Line[1] = Departure Time. Format: '2019-01-01 00:01:47.4010'
+                    master_split = line[1].split(' ')
+                    date_split = master_split[0].split('-')
+                    time_split = master_split[1].split(':')
+                    seconds_split = time_split[2].split('.')
+                    seconds = seconds_split[0]
+
+                    departure = datetime(year=int(date_split[0]),
                                      month=int(date_split[1]),
                                      day=int(date_split[2]),
                                      hour=int(time_split[0]),
                                      minute=int(time_split[1]),
                                      second=int(seconds))
 
-                departures.append(departure)
+                    departures.append(departure)
+                    
+                hourly_dep.append(time_split[0])
+
 
     t1 = time.time()
     total = t1 - t0
     print("The departure operation took {} seconds.".format(round(total, 2)))
 
+    return Counter(hourly_dep)
 
-stationList = []
+
+
+filename = "citi3.csv"
