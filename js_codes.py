@@ -1,8 +1,6 @@
 def item_click_event():
     # Code for the callback
     return """
-
-
         function removeSegment() {
             var emptyData = {'x0': [], 'y0': [], 'x1': [], 'y1': []};
             segment.data = emptyData;
@@ -16,7 +14,7 @@ def item_click_event():
 
         // Get indices array of all selected items
         var selected = source.selected.indices;
-        console.log(selected.length); // 3
+        console.log(selected.length);
 
         // Remove segment if only 1 dot selected
         if (selected.length == 1){
