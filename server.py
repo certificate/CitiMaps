@@ -7,6 +7,10 @@ from bokeh.plotting import figure, curdoc
 from bokeh.tile_providers import get_provider, Vendors
 
 
+# This is a Bokeh server application
+# Run with 'bokeh serve --show server.py'
+
+
 def stations_to_lists(stations):
     merc_x = []
     merc_y = []
@@ -48,7 +52,6 @@ circles = p.circle(x="lat", y="lon", size=10, fill_color="red", fill_alpha=0.8, 
 sr = p.segment(x0='x0', y0='y0', x1='x1', y1='y1', color='red', alpha=0.6, line_width=3, source=segment_source)
 p.add_tools(TapTool())
 
-
 # put the plot in a layout and add to the document
 curdoc().add_root(column(p))
 
@@ -73,6 +76,7 @@ def update(attr, old, new):
         map_segment(selected)
 
     print("Done.")
+
 
 def remove_segment():
     sr.data_source.data = {'x0': [], 'y0': [], 'x1': [], 'y1': []}
