@@ -2,8 +2,8 @@ from bokeh.models import ColumnDataSource, CustomJS, TapTool
 from bokeh.plotting import figure, show, output_file
 from bokeh.tile_providers import get_provider, Vendors
 
-import bokeh
-import csvReader
+from app import csvReader
+
 
 def stations_to_lists(stations):
     merc_x = []

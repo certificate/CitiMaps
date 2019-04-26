@@ -5,6 +5,9 @@ import math
 from collections import Counter
 
 
+filename = "citi3.csv"
+
+
 class Station:
     def __init__(self, name, lat, lon, stationId, merc_x, merc_y):
         self.name = name
@@ -120,5 +123,52 @@ def calc_departures_per_hour(station_id):
     return Counter(hourly_dep)
 
 
+def avg_hourly_departures_fpr_city():
+    print("Calculating departures per hour for the entire city")
+    # Time the task just to see how efficient it is.
+    t0 = time.time()
+    departures = []
+    hourly_dep = []
 
-filename = "citi3.csv"
+    with open(filename, 'r', encoding='latin-1') as data:
+        reader = csv.reader(data, delimiter=",")
+        # Skip the first row. Doesn't contain anything but the data formats.
+        for _ in range(0, 1):
+            next(data)
+        for line in reader:
+
+            # Different .csv's have different formats...
+            if (filename == "citi3.csv"):
+                # 2/1/2015 0:04
+                master_split = line[1].split(' ')
+                time_split = master_split[1].split(':')
+                hour = time_split[0]
+
+            else:
+                # Line[1] = Departure Time. Format: '2019-01-01 00:01:47.4010'
+                master_split = line[1].split(' ')
+                date_split = master_split[0].split('-')
+                time_split = master_split[1].split(':')
+                seconds_split = time_split[2].split('.')
+                hour = time_split[0]
+                seconds = seconds_split[0]
+
+                departure = datetime(year=int(date_split[0]),
+                                     month=int(date_split[1]),
+                                     day=int(date_split[2]),
+                                     hour=int(time_split[0]),
+                                     minute=int(time_split[1]),
+                                     second=int(seconds))
+
+                departures.append(departure)
+
+            hourly_dep.append(hour)
+
+    counted = Counter(hourly_dep)
+    print(counted)
+
+
+    t1 = time.time()
+    total = t1 - t0
+    print("The citywide departure calculation took {} seconds.".format(round(total, 2)))
+    return counted
