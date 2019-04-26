@@ -123,7 +123,7 @@ def calc_departures_per_hour(station_id):
     return Counter(hourly_dep)
 
 
-def avg_hourly_departures_fpr_city():
+def avg_hourly_departures_for_city():
     print("Calculating departures per hour for the entire city")
     # Time the task just to see how efficient it is.
     t0 = time.time()

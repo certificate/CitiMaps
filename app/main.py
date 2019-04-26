@@ -42,7 +42,7 @@ map_source = ColumnDataSource(
 )
 segment_source = ColumnDataSource({'x0': [], 'y0': [], 'x1': [], 'y1': []})
 
-dep_dic = dict(csvReader.avg_hourly_departures_fpr_city())
+dep_dic = dict(csvReader.avg_hourly_departures_for_city())
 hours = list(dep_dic.keys())
 departures = list(dep_dic.values())
 
