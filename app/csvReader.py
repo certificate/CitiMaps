@@ -4,6 +4,7 @@ import time
 import math
 from collections import Counter
 
+from bokeh.models import ColumnDataSource
 
 filename = "citi3.csv"
 
@@ -74,7 +75,7 @@ def import_data():
 
 
 def calc_departures_per_hour(station_id):
-    print("Calculating departures per hour for " + station_id)
+    print("Calculating departures per hour for " + str(station_id))
     # Time the task just to see how efficient it is.
     t0 = time.time()
     departures = []
@@ -88,9 +89,9 @@ def calc_departures_per_hour(station_id):
         for line in reader:
             stationIdCSV = line[3]
 
-            if (stationIdCSV == station_id):
+            if int(stationIdCSV) == int(station_id):
 
-                if(filename == "citi3.csv"):
+                if filename == "citi3.csv":
                     # 2/1/2015 0:04
                     master_split = line[1].split(' ')
                     time_split = master_split[1].split(':')
@@ -105,22 +106,25 @@ def calc_departures_per_hour(station_id):
                     seconds = seconds_split[0]
 
                     departure = datetime(year=int(date_split[0]),
-                                     month=int(date_split[1]),
-                                     day=int(date_split[2]),
-                                     hour=int(time_split[0]),
-                                     minute=int(time_split[1]),
-                                     second=int(seconds))
+                                         month=int(date_split[1]),
+                                         day=int(date_split[2]),
+                                         hour=int(time_split[0]),
+                                         minute=int(time_split[1]),
+                                         second=int(seconds))
 
                     departures.append(departure)
-                    
+
                 hourly_dep.append(time_split[0])
 
+    counted = dict(Counter(hourly_dep))
+    mydata = dict(hours=list(counted.keys()),
+                  departures=list(counted.values()))
 
+    print(mydata)
     t1 = time.time()
     total = t1 - t0
-    print("The departure operation took {} seconds.".format(round(total, 2)))
-
-    return Counter(hourly_dep)
+    print("The departure calculation took {} seconds.".format(round(total, 2)))
+    return mydata
 
 
 def avg_hourly_departures_for_city():
@@ -164,11 +168,13 @@ def avg_hourly_departures_for_city():
 
             hourly_dep.append(hour)
 
-    counted = Counter(hourly_dep)
-    print(counted)
-
+    counted = dict(Counter(hourly_dep))
+    data_source = ColumnDataSource(
+        data=dict(hours=list(counted.keys()),
+                  departures=list(counted.values()))
+    )
 
     t1 = time.time()
     total = t1 - t0
     print("The citywide departure calculation took {} seconds.".format(round(total, 2)))
-    return counted
+    return data_source, list(counted.keys()), list(counted.values())
