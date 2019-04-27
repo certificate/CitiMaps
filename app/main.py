@@ -1,7 +1,12 @@
+import threading
+import time
+
 from bokeh.layouts import gridplot
 from bokeh.models import ColumnDataSource, TapTool
 from bokeh.plotting import figure, curdoc
 from bokeh.tile_providers import get_provider, Vendors
+from bokeh.transform import dodge
+
 import csvReader
 
 
@@ -34,17 +39,26 @@ merc_x_range = [a(merc_x_list) for a in [min, max]]
 merc_y_range = [a(merc_y_list) for a in [min, max]]
 
 # START DATA SOURCES
+
+# Map
 map_source = ColumnDataSource(
     data=dict(lat=merc_x_list,
               lon=merc_y_list,
               station_name=station_names,
               station_unique=station_id)
 )
+# Segment between two circles
 segment_source = ColumnDataSource({'x0': [], 'y0': [], 'x1': [], 'y1': []})
 
+# Departures [also save original departures data for whhen there is no selection]
 departures_source, hours, departures = csvReader.avg_hourly_departures_for_city()
-# Save original departures data for whhen there is no selection
 save_source = departures_source.data
+
+# Second departures
+second_departures = ColumnDataSource(
+    data=dict(hours=[],
+              departures=[])
+)
 # END DATA SOURCES
 
 
@@ -60,14 +74,19 @@ p_map.add_tools(TapTool())
 # Plot 2 (Departures)
 p_dep = figure(x_range=hours, plot_height=525, plot_width=840, title="Hourly Departures - citywide",
                toolbar_location="right", tools="")
-p_dep.vbar(x='hours', top='departures', width=0.9, source=departures_source)
+v_bars = p_dep.vbar(x=dodge('hours', 0.0, range=p_dep.x_range),
+                    top='departures', width=0.4, source=departures_source, color="grey")
+v_bars_second = p_dep.vbar(x=dodge('hours', 0.4, range=p_dep.x_range),
+                           top='departures', width=0.4, source=second_departures, color="orange")
+p_dep.x_range.range_padding = 0.2
+
 p_dep.toolbar.logo = None
 
 # Plot 3 (Averages - ride length etc.)
 # TODO: Create a REAL plot. This is just for screen filler.
 p_dep2 = figure(x_range=hours, plot_height=525, plot_width=840, title="Hourly Departures - citywide",
                 toolbar_location="right", tools="")
-v_bars = p_dep2.vbar(x='hours', top='departures', width=0.9, source=departures_source)
+p_dep2.vbar(x='hours', top='departures', width=0.9, source=departures_source)
 p_dep2.toolbar.logo = None
 
 plot_pile = gridplot([[p_dep], [p_dep2]])
@@ -96,17 +115,27 @@ def update(attr, old, new):
             map_source.selected.indices = []
 
     if selected_items == 2:
+        #TODO: Fix timing. Takes way too long for segment to appear/disappear.
         map_segment(selected)
+        set_second_station_departures(station_id[selected[0]])
 
     if selected_items == 1:
         set_departures(station_id[selected[0]])
+        clear_second_bars()
 
     if selected_items == 0:
         set_departures("city")
+        clear_second_bars()
 
 
 def clear_screen():
     sr.data_source.data = {'x0': [], 'y0': [], 'x1': [], 'y1': []}
+
+
+def clear_second_bars():
+    v_bars_second.data_source.data = dict(hours=[],
+                                          departures=[],
+                                          departures_2=[])
 
 
 def map_segment(selected):
@@ -127,6 +156,13 @@ def set_departures(id_station):
 
     else:
         v_bars.data_source.data = csvReader.calc_departures_per_hour(id_station)
+
+
+def set_second_station_departures(second_station_id):
+    current_hours = v_bars.data_source.data['hours']
+    second_deps = csvReader.calc_departures_per_hour(second_station_id)['departures']
+    v_bars_second.data_source.data = dict(hours=current_hours,
+                                          departures=second_deps)
 
 
 circles.data_source.selected.on_change('indices', update)

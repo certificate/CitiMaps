@@ -75,7 +75,6 @@ def import_data():
 
 
 def calc_departures_per_hour(station_id):
-    print("Calculating departures per hour for " + str(station_id))
     # Time the task just to see how efficient it is.
     t0 = time.time()
     departures = []
@@ -120,7 +119,6 @@ def calc_departures_per_hour(station_id):
     mydata = dict(hours=list(counted.keys()),
                   departures=list(counted.values()))
 
-    print(mydata)
     t1 = time.time()
     total = t1 - t0
     print("The departure calculation took {} seconds.".format(round(total, 2)))
@@ -128,7 +126,6 @@ def calc_departures_per_hour(station_id):
 
 
 def avg_hourly_departures_for_city():
-    print("Calculating departures per hour for the entire city")
     # Time the task just to see how efficient it is.
     t0 = time.time()
     departures = []
