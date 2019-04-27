@@ -99,7 +99,7 @@ def update(attr, old, new):
         map_segment(selected)
 
     if selected_items == 1:
-        set_departures(selected[0])
+        set_departures(station_id[selected[0]])
 
     if selected_items == 0:
         set_departures("city")
