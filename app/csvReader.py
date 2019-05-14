@@ -86,7 +86,7 @@ def calc_departures_per_hour(station_id):
         for _ in range(0, 1):
             next(data)
         for line in reader:
-            stationIdCSV = line[3]
+            stationIdCSV = line[0]
 
             if int(stationIdCSV) == int(station_id):
 
@@ -115,13 +115,18 @@ def calc_departures_per_hour(station_id):
 
                 hourly_dep.append(time_split[0])
 
-    counted = dict(Counter(hourly_dep))
-    mydata = dict(hours=list(counted.keys()),
-                  departures=list(counted.values()))
+    hours = []
+    values = []
+    for i in range(24):
+        hours.append(str(i))
+        values.append(hourly_dep.count(str(i)))
+
+    mydata = dict(hours=hours,
+                  departures=values)
 
     t1 = time.time()
     total = t1 - t0
-    print("The departure calculation took {} seconds.".format(round(total, 2)))
+    # print("The departure calculation took {} seconds.".format(round(total, 2)))
     return mydata
 
 
@@ -171,7 +176,27 @@ def avg_hourly_departures_for_city():
                   departures=list(counted.values()))
     )
 
+    print('HOX')
+    print('HOX')
+    print("")
+    print(dict(hours=list(counted.keys()),
+               departures=list(counted.values())))
+    print("")
+    print("")
     t1 = time.time()
     total = t1 - t0
     print("The citywide departure calculation took {} seconds.".format(round(total, 2)))
     return data_source, list(counted.keys()), list(counted.values())
+
+
+def get_departures_for_station(station_id):
+    with open('departures.csv', 'r', encoding='latin-1') as data:
+        reader = csv.reader(data, delimiter=";")
+        # Skip the first two rows. Doesn't contain anything but the data formats.
+        for _ in range(0, 2):
+            next(data)
+        for line in reader:
+            stationIdCSV = line[0]
+
+            if int(stationIdCSV) == int(station_id):
+                return line[1], line[2]

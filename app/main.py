@@ -1,6 +1,6 @@
 import threading
 import time
-
+import ast
 from bokeh.layouts import gridplot
 from bokeh.models import ColumnDataSource, TapTool
 from bokeh.plotting import figure, curdoc
@@ -47,6 +47,7 @@ map_source = ColumnDataSource(
               station_name=station_names,
               station_unique=station_id)
 )
+
 # Segment between two circles
 segment_source = ColumnDataSource({'x0': [], 'y0': [], 'x1': [], 'y1': []})
 
@@ -115,7 +116,7 @@ def update(attr, old, new):
             map_source.selected.indices = []
 
     if selected_items == 2:
-        #TODO: Fix timing. Takes way too long for segment to appear/disappear.
+        # TODO: Fix timing. Takes way too long for segment to appear/disappear.
         map_segment(selected)
         set_second_station_departures(station_id[selected[0]])
 
@@ -155,14 +156,21 @@ def set_departures(id_station):
         v_bars.data_source.data = save_source
 
     else:
-        v_bars.data_source.data = csvReader.calc_departures_per_hour(id_station)
+        new_hours, new_deps = csvReader.get_departures_for_station(id_station)
+        print("ALL NEW SHIZZ")
+        new_hours = ast.literal_eval(new_hours)
+        new_deps = ast.literal_eval(new_deps)
+        v_bars.data_source.data = dict(hours=new_hours,
+                                       departures=new_deps)
 
 
 def set_second_station_departures(second_station_id):
     current_hours = v_bars.data_source.data['hours']
-    second_deps = csvReader.calc_departures_per_hour(second_station_id)['departures']
-    v_bars_second.data_source.data = dict(hours=current_hours,
-                                          departures=second_deps)
+    new_hours, new_deps = csvReader.get_departures_for_station(second_station_id)
+    new_hours = ast.literal_eval(new_hours)
+    new_deps = ast.literal_eval(new_deps)
+    v_bars_second.data_source.data = dict(hours=new_hours,
+                                          departures=new_deps)
 
 
 circles.data_source.selected.on_change('indices', update)

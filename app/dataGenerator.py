@@ -4,18 +4,15 @@ import csvReader
 
 
 def write_headers():
-    with open('modified_data.csv', mode='w') as data_file:
-        fieldnames = ['station_id', 'departures']
-        writer = csv.DictWriter(data_file, fieldnames=fieldnames)
-
-        writer.writeheader()
+    with open('departures.csv', mode='w', encoding='latin-1') as data_file:
+        writer = csv.writer(data_file, delimiter=';', quotechar='', quoting=csv.QUOTE_NONE, escapechar='\\')
+        writer.writerow(["station_id", "hours", "departures"])
 
 
-def write_to_csv(id, deps):
-    with open('modified_data.csv', mode='a') as data_file:
-        writer = csv.writer(data_file, delimiter=',', quotechar='"', quoting=csv.QUOTE_MINIMAL)
-
-        writer.writerow([id, deps])
+def write_to_csv(id, hours, deps):
+    with open('departures.csv', mode='a', newline='', encoding='latin-1') as data_file:
+        writer = csv.writer(data_file, delimiter=';', quotechar='', quoting=csv.QUOTE_NONE, escapechar='\\')
+        writer.writerow([id, hours, deps])
 
 
 filename = "citi3.csv"
@@ -53,7 +50,7 @@ with open(filename, 'r', encoding='latin-1') as data:
 
             if stationId not in skipList:
                 deps = csvReader.calc_departures_per_hour(stationId)
-                write_to_csv(stationId, deps)
+                write_to_csv(stationId, deps['hours'], deps['departures'])
 
                 skipList.append(stationId)
 
