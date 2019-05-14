@@ -108,10 +108,3 @@ venv.bak/
 
 # CSV
 *.csv
-
-# HTML
-*.html
-.html
-/tile.html
-/Temp.py
-/tile.html

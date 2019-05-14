@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <link href="https://fonts.googleapis.com/css?family=Baloo+Bhai" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css?family=Just+Another+Hand" rel="stylesheet">
+        <style>
+            body { background: #15191C; }
+        </style>
+        <meta charset="utf-8">
+        {{ bokeh_css }}
+        {{ bokeh_js }}
+    </head>
+    <body>
+        {{ plot_div|indent(8) }}
+        {{ plot_script|indent(8) }}
+    </body>
+</html>
