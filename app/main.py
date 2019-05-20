@@ -84,8 +84,8 @@ segment_mapper = linear_cmap(field_name='x0', palette=plasma(256), low=min(merc_
 # Plot 1 (Map)
 p_map = figure(x_range=merc_x_range, y_range=merc_y_range,
                x_axis_type="mercator", y_axis_type="mercator", plot_width=1440, plot_height=1080,
-               title="Station locations in New York", toolbar_location="below", tooltips=[
-        ("Name", "@station_name")])
+               title="Station locations in New York", toolbar_location="below",
+               tools='pan, lasso_select, wheel_zoom, reset', tooltips=[("Name", "@station_name")])
 p_map.add_tile(get_provider(Vendors.CARTODBPOSITRON_RETINA))
 circles = p_map.circle(x="lat", y="lon", size=10, fill_alpha=0.8, source=map_source, line_color=circle_mapper,
                        color=circle_mapper)
@@ -122,42 +122,6 @@ curdoc().theme = 'dark_minimal'
 
 
 # Callback function that is activated when an item is >>selected<<
-def set_sexes(station_id):
-    men, women, others = csvReader.get_sexes(station_id)
-    sexes = [men, women, others]
-    genders = ["Men", "Women", "Others"]
-    sexes = list(map(int, sexes))
-    x = dict(zip(genders, sexes))
-    newData = pd.Series(x).reset_index(name='value').rename(columns={'index': 'sex'})
-    newData['angle'] = newData['value'] / newData['value'].sum() * 2 * pi
-    newData['color'] = ['#E5827E', '#F6A16C', '#F7E44E']
-
-    new_source = ColumnDataSource(
-        data=newData
-    )
-    p_wedge.data_source.data = new_source.data
-
-
-def set_sexes_second(first_station_id, second_station_id):
-    men1, women1, others1 = csvReader.get_sexes(first_station_id)
-    men2, women2, others2 = csvReader.get_sexes(second_station_id)
-    men = int(men1) + int(men2)
-    women = int(women1) + int(women2)
-    others = int(others1) + int(others2)
-    sexes = [men, women, others]
-    genders = ["Men", "Women", "Others"]
-    sexes = list(map(int, sexes))
-    x = dict(zip(genders, sexes))
-    newData = pd.Series(x).reset_index(name='value').rename(columns={'index': 'sex'})
-    newData['angle'] = newData['value'] / newData['value'].sum() * 2 * pi
-    newData['color'] = ['#E5827E', '#F6A16C', '#F7E44E']
-
-    new_source = ColumnDataSource(
-        data=newData
-    )
-    p_wedge.data_source.data = new_source.data
-
-
 def update(attr, old, new):
     global segment_source
     selected = map_source.selected.indices
@@ -168,10 +132,10 @@ def update(attr, old, new):
     for item in selected:
         print("Station name for ID " + str(item) + " is: " + str(station_names[item]))
 
-    if selected_items != 2:
+    if selected_items == 3 or selected_items == 0:
         clear_screen()
 
-        if selected_items > 2:
+        if selected_items == 3:
             map_source.selected.indices = []
 
     if selected_items == 2:
@@ -183,11 +147,20 @@ def update(attr, old, new):
         set_departures(station_id[selected[0]])
         set_sexes(station_id[selected[0]])
         clear_second_bars()
+        clear_screen()
 
     if selected_items == 0:
         set_departures("city")
         set_sexes(-1)
         clear_second_bars()
+
+    if selected_items > 2:
+        station_ids = []
+
+        for item in selected:
+            station_ids.append(station_id[item])
+
+        set_multiple_departures(station_ids)
 
 
 def clear_screen():
@@ -240,6 +213,63 @@ def get_station_name(stationId):
     for station in stations:
         if station.stationId == stationId:
             return station.name
+
+
+def set_sexes(station_id):
+    men, women, others = csvReader.get_sexes(station_id)
+    sexes = [men, women, others]
+    genders = ["Men", "Women", "Others"]
+    sexes = list(map(int, sexes))
+    x = dict(zip(genders, sexes))
+    newData = pd.Series(x).reset_index(name='value').rename(columns={'index': 'sex'})
+    newData['angle'] = newData['value'] / newData['value'].sum() * 2 * pi
+    newData['color'] = ['#E5827E', '#F6A16C', '#F7E44E']
+
+    new_source = ColumnDataSource(
+        data=newData
+    )
+    p_wedge.data_source.data = new_source.data
+
+
+def set_sexes_second(first_station_id, second_station_id):
+    men1, women1, others1 = csvReader.get_sexes(first_station_id)
+    men2, women2, others2 = csvReader.get_sexes(second_station_id)
+    men = int(men1) + int(men2)
+    women = int(women1) + int(women2)
+    others = int(others1) + int(others2)
+    sexes = [men, women, others]
+    genders = ["Men", "Women", "Others"]
+    sexes = list(map(int, sexes))
+    x = dict(zip(genders, sexes))
+    newData = pd.Series(x).reset_index(name='value').rename(columns={'index': 'sex'})
+    newData['angle'] = newData['value'] / newData['value'].sum() * 2 * pi
+    newData['color'] = ['#E5827E', '#F6A16C', '#F7E44E']
+
+    new_source = ColumnDataSource(
+        data=newData
+    )
+    p_wedge.data_source.data = new_source.data
+
+
+def set_multiple_departures(station_ids):
+    new_deps = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    for station in station_ids:
+        temp_hours, temp_deps = csvReader.get_departures_for_station(int(station))
+        temp_deps = ast.literal_eval(temp_deps)
+        new_deps = combine_two_integer_lists(new_deps, temp_deps)
+
+    print("")
+    print(new_deps)
+    print(len(new_deps))
+    v_bars.data_source.data = dict(hours=hours, departures=new_deps)
+    p_dep.title.text = "Hourly Departures - " + str(len(station_ids)) + " stations"
+
+
+def combine_two_integer_lists(list1, list2):
+    return_list = []
+    for i in range(len(list2)):
+        return_list.append(int(list1[i]) + int(list2[i]))
+    return return_list
 
 
 circles.data_source.selected.on_change('indices', update)
