@@ -112,6 +112,9 @@ p_wedge = p_sex.wedge(x=0, y=1, radius=0.4,
                       start_angle=cumsum('angle', include_zero=True), end_angle=cumsum('angle'),
                       line_color="white", fill_color='color', legend='sex', source=data)
 p_sex.toolbar.logo = None
+p_sex.axis.axis_label=None
+p_sex.axis.visible=False
+p_sex.grid.grid_line_color = None
 
 plot_pile = gridplot([[p_dep], [p_sex]])
 site_layout = gridplot([[p_map, plot_pile]])
@@ -161,6 +164,7 @@ def update(attr, old, new):
             station_ids.append(station_id[item])
 
         set_multiple_departures(station_ids)
+        set_multiple_sexes_on_piechart(station_ids)
 
 
 def clear_screen():
@@ -250,6 +254,31 @@ def set_sexes_second(first_station_id, second_station_id):
     )
     p_wedge.data_source.data = new_source.data
 
+def set_multiple_sexes_on_piechart(station_ids):
+    men_total = 0
+    women_total = 0
+    others_total = 0
+
+    for station in station_ids:
+        men1, women1, others1 = csvReader.get_sexes(station)
+        men_total = int(men_total) + int(men1)
+        women_total = int(women_total) + int(women1)
+        others_total = int(others_total) + int(others1)
+        print(men_total, women_total, others_total)
+
+    sexes_total = [men_total, women_total, others_total]
+    genders = ["Men", "Women", "Others"]
+    sexes_total = list(map(int, sexes_total))
+    x = dict(zip(genders, sexes_total))
+    newData = pd.Series(x).reset_index(name='value').rename(columns={'index': 'sex'})
+    newData['angle'] = newData['value'] / newData['value'].sum() * 2 * pi
+    newData['color'] = ['#E5827E', '#F6A16C', '#F7E44E']
+
+    new_source = ColumnDataSource(
+        data=newData
+    )
+    p_wedge.data_source.data = new_source.data
+
 
 def set_multiple_departures(station_ids):
     new_deps = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
@@ -258,9 +287,6 @@ def set_multiple_departures(station_ids):
         temp_deps = ast.literal_eval(temp_deps)
         new_deps = combine_two_integer_lists(new_deps, temp_deps)
 
-    print("")
-    print(new_deps)
-    print(len(new_deps))
     v_bars.data_source.data = dict(hours=hours, departures=new_deps)
     p_dep.title.text = "Hourly Departures - " + str(len(station_ids)) + " stations"
 
