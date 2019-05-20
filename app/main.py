@@ -1,11 +1,16 @@
 import threading
 import time
 import ast
+from math import pi
+
+import pandas as pd
 from bokeh.layouts import gridplot
-from bokeh.models import ColumnDataSource, TapTool
+from bokeh.models import ColumnDataSource, TapTool, Title
 from bokeh.plotting import figure, curdoc
 from bokeh.tile_providers import get_provider, Vendors
-from bokeh.transform import dodge
+from bokeh.transform import dodge, linear_cmap, cumsum
+from bokeh.palettes import plasma
+from bokeh.palettes import Plasma, Category20c
 
 import csvReader
 
@@ -60,37 +65,55 @@ second_departures = ColumnDataSource(
     data=dict(hours=[],
               departures=[])
 )
-# END DATA SOURCES
 
+# Sexes
+men, women, others = csvReader.get_sexes(-1)
+sexes = [men, women, others]
+genders = ["Men", "Women", "Others"]
+sexes = list(map(int, sexes))
+x = dict(zip(genders, sexes))
+data = pd.Series(x).reset_index(name='value').rename(columns={'index': 'sex'})
+data['angle'] = data['value'] / data['value'].sum() * 2 * pi
+data['color'] = ['#E5827E', '#F6A16C', '#F7E44E']
+
+# END DATA SOURCES
+# Color mappers
+circle_mapper = linear_cmap(field_name='lat', palette=plasma(256), low=min(merc_x_list), high=max(merc_x_list))
+segment_mapper = linear_cmap(field_name='x0', palette=plasma(256), low=min(merc_x_list), high=max(merc_x_list))
 
 # Plot 1 (Map)
 p_map = figure(x_range=merc_x_range, y_range=merc_y_range,
                x_axis_type="mercator", y_axis_type="mercator", plot_width=1440, plot_height=1080,
-               title="Station locations in New York", toolbar_location="below")
+               title="Station locations in New York", toolbar_location="below", tooltips=[
+        ("Name", "@station_name")])
 p_map.add_tile(get_provider(Vendors.CARTODBPOSITRON_RETINA))
-circles = p_map.circle(x="lat", y="lon", size=10, fill_color="red", fill_alpha=0.8, source=map_source)
-sr = p_map.segment(x0='x0', y0='y0', x1='x1', y1='y1', color='red', alpha=0.6, line_width=3, source=segment_source)
+circles = p_map.circle(x="lat", y="lon", size=10, fill_alpha=0.8, source=map_source, line_color=circle_mapper,
+                       color=circle_mapper)
+sr = p_map.segment(x0='x0', y0='y0', x1='x1', y1='y1', line_color=segment_mapper, color=segment_mapper, alpha=0.6,
+                   line_width=3, source=segment_source)
 p_map.add_tools(TapTool())
 
 # Plot 2 (Departures)
 p_dep = figure(x_range=hours, plot_height=525, plot_width=840, title="Hourly Departures - citywide",
-               toolbar_location="right", tools="")
+               toolbar_location="right", tools="", tooltips=[("Departures", "@departures")])
 v_bars = p_dep.vbar(x=dodge('hours', 0.0, range=p_dep.x_range),
-                    top='departures', width=0.4, source=departures_source, color="grey")
+                    top='departures', width=0.4, source=departures_source, color="#E5827E")
 v_bars_second = p_dep.vbar(x=dodge('hours', 0.4, range=p_dep.x_range),
-                           top='departures', width=0.4, source=second_departures, color="orange")
+                           top='departures', width=0.4, source=second_departures, color="#F7E44E")
 p_dep.x_range.range_padding = 0.2
 
 p_dep.toolbar.logo = None
 
 # Plot 3 (Averages - ride length etc.)
 # TODO: Create a REAL plot. This is just for screen filler.
-p_dep2 = figure(x_range=hours, plot_height=525, plot_width=840, title="Hourly Departures - citywide",
-                toolbar_location="right", tools="")
-p_dep2.vbar(x='hours', top='departures', width=0.9, source=departures_source)
-p_dep2.toolbar.logo = None
+p_sex = figure(plot_height=525, plot_width=840, title="Gender distribution", toolbar_location=None,
+               tools="hover", tooltips="@sex: @value", x_range=(-0.75, 0.75))
+p_wedge = p_sex.wedge(x=0, y=1, radius=0.4,
+                      start_angle=cumsum('angle', include_zero=True), end_angle=cumsum('angle'),
+                      line_color="white", fill_color='color', legend='sex', source=data)
+p_sex.toolbar.logo = None
 
-plot_pile = gridplot([[p_dep], [p_dep2]])
+plot_pile = gridplot([[p_dep], [p_sex]])
 site_layout = gridplot([[p_map, plot_pile]])
 
 curdoc().add_root(site_layout)
@@ -99,6 +122,42 @@ curdoc().theme = 'dark_minimal'
 
 
 # Callback function that is activated when an item is >>selected<<
+def set_sexes(station_id):
+    men, women, others = csvReader.get_sexes(station_id)
+    sexes = [men, women, others]
+    genders = ["Men", "Women", "Others"]
+    sexes = list(map(int, sexes))
+    x = dict(zip(genders, sexes))
+    newData = pd.Series(x).reset_index(name='value').rename(columns={'index': 'sex'})
+    newData['angle'] = newData['value'] / newData['value'].sum() * 2 * pi
+    newData['color'] = ['#E5827E', '#F6A16C', '#F7E44E']
+
+    new_source = ColumnDataSource(
+        data=newData
+    )
+    p_wedge.data_source.data = new_source.data
+
+
+def set_sexes_second(first_station_id, second_station_id):
+    men1, women1, others1 = csvReader.get_sexes(first_station_id)
+    men2, women2, others2 = csvReader.get_sexes(second_station_id)
+    men = int(men1) + int(men2)
+    women = int(women1) + int(women2)
+    others = int(others1) + int(others2)
+    sexes = [men, women, others]
+    genders = ["Men", "Women", "Others"]
+    sexes = list(map(int, sexes))
+    x = dict(zip(genders, sexes))
+    newData = pd.Series(x).reset_index(name='value').rename(columns={'index': 'sex'})
+    newData['angle'] = newData['value'] / newData['value'].sum() * 2 * pi
+    newData['color'] = ['#E5827E', '#F6A16C', '#F7E44E']
+
+    new_source = ColumnDataSource(
+        data=newData
+    )
+    p_wedge.data_source.data = new_source.data
+
+
 def update(attr, old, new):
     global segment_source
     selected = map_source.selected.indices
@@ -116,16 +175,18 @@ def update(attr, old, new):
             map_source.selected.indices = []
 
     if selected_items == 2:
-        # TODO: Fix timing. Takes way too long for segment to appear/disappear.
         map_segment(selected)
         set_second_station_departures(station_id[selected[0]])
+        set_sexes_second(station_id[selected[0]], station_id[selected[1]])
 
     if selected_items == 1:
         set_departures(station_id[selected[0]])
+        set_sexes(station_id[selected[0]])
         clear_second_bars()
 
     if selected_items == 0:
         set_departures("city")
+        set_sexes(-1)
         clear_second_bars()
 
 
@@ -154,14 +215,15 @@ def map_segment(selected):
 def set_departures(id_station):
     if id_station == "city":
         v_bars.data_source.data = save_source
+        p_dep.title.text = "Hourly Departures - citywide"
 
     else:
         new_hours, new_deps = csvReader.get_departures_for_station(id_station)
-        print("ALL NEW SHIZZ")
         new_hours = ast.literal_eval(new_hours)
         new_deps = ast.literal_eval(new_deps)
         v_bars.data_source.data = dict(hours=new_hours,
                                        departures=new_deps)
+        p_dep.title.text = "Hourly Departures - " + get_station_name(id_station)
 
 
 def set_second_station_departures(second_station_id):
@@ -171,6 +233,13 @@ def set_second_station_departures(second_station_id):
     new_deps = ast.literal_eval(new_deps)
     v_bars_second.data_source.data = dict(hours=new_hours,
                                           departures=new_deps)
+    p_dep.title.text = p_dep.title.text + " and " + get_station_name(second_station_id)
+
+
+def get_station_name(stationId):
+    for station in stations:
+        if station.stationId == stationId:
+            return station.name
 
 
 circles.data_source.selected.on_change('indices', update)

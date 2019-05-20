@@ -6,13 +6,13 @@ import csvReader
 def write_headers():
     with open('departures.csv', mode='w', encoding='latin-1') as data_file:
         writer = csv.writer(data_file, delimiter=';', quotechar='', quoting=csv.QUOTE_NONE, escapechar='\\')
-        writer.writerow(["station_id", "hours", "departures"])
+        writer.writerow(["station_id", "hours", "departures", "men", "women", "unknown"])
 
 
-def write_to_csv(id, hours, deps):
+def write_to_csv(id, hours, deps, men, women, unknown):
     with open('departures.csv', mode='a', newline='', encoding='latin-1') as data_file:
         writer = csv.writer(data_file, delimiter=';', quotechar='', quoting=csv.QUOTE_NONE, escapechar='\\')
-        writer.writerow([id, hours, deps])
+        writer.writerow([id, hours, deps, men, women, unknown])
 
 
 filename = "citi3.csv"
@@ -50,7 +50,8 @@ with open(filename, 'r', encoding='latin-1') as data:
 
             if stationId not in skipList:
                 deps = csvReader.calc_departures_per_hour(stationId)
-                write_to_csv(stationId, deps['hours'], deps['departures'])
+                men, women, unknown = csvReader.calc_men_and_women(stationId)
+                write_to_csv(stationId, deps['hours'], deps['departures'], men, women, unknown)
 
                 skipList.append(stationId)
 

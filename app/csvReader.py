@@ -176,17 +176,41 @@ def avg_hourly_departures_for_city():
                   departures=list(counted.values()))
     )
 
-    print('HOX')
-    print('HOX')
-    print("")
-    print(dict(hours=list(counted.keys()),
-               departures=list(counted.values())))
-    print("")
-    print("")
     t1 = time.time()
     total = t1 - t0
     print("The citywide departure calculation took {} seconds.".format(round(total, 2)))
     return data_source, list(counted.keys()), list(counted.values())
+
+
+def calc_men_and_women(stationId):
+    # Time the task just to see how efficient it is.
+    t0 = time.time()
+    males = 0
+    females = 0
+    uknown = 0
+
+    with open(filename, 'r', encoding='latin-1') as data:
+        reader = csv.reader(data, delimiter=",")
+        # Skip the first row. Doesn't contain anything but the data formats.
+        for _ in range(0, 1):
+            next(data)
+        for line in reader:
+            stationIdCSV = line[0]
+
+            if int(stationIdCSV) == int(stationId):
+                gender = int(line[14])
+
+                if gender == 1:
+                    males = males + 1
+                elif gender == 2:
+                    females = females + 1
+                elif gender == 0:
+                    uknown = uknown + 1
+
+    t1 = time.time()
+    total = t1 - t0
+    # print("The departure calculation took {} seconds.".format(round(total, 2)))
+    return males, females, uknown
 
 
 def get_departures_for_station(station_id):
@@ -200,3 +224,28 @@ def get_departures_for_station(station_id):
 
             if int(stationIdCSV) == int(station_id):
                 return line[1], line[2]
+
+
+def get_sexes(station_id):
+    men = 0
+    women = 0
+    others = 0
+    with open('departures.csv', 'r', encoding='latin-1') as data:
+        reader = csv.reader(data, delimiter=";")
+        # Skip the first two rows. Doesn't contain anything but the data formats.
+
+        for _ in range(0, 2):
+            next(data)
+        for line in reader:
+            stationIdCSV = line[0]
+
+            if int(stationIdCSV) == int(station_id):
+                return line[3], line[4], line[5]
+
+            elif station_id == -1:
+                men = men + int(line[3])
+                women = women + int(line[4])
+                others = others + int(line[5])
+
+    return str(men), str(women), str(others)
+
